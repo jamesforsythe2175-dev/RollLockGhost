@@ -13,10 +13,10 @@ void RollLockGhost::onLoad()
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
 			bool enabled = cvar.getBoolValue();
 			if (enabled) {
-				LOG("Roll-Lock enabled - hold activation button (Handbrake) to engage");
+				cvarManager->log("Roll-Lock enabled - hold activation button (Handbrake) to engage");
 			} else {
 				rollLockActive = false;
-				LOG("Roll-Lock disabled");
+				cvarManager->log("Roll-Lock disabled");
 			}
 		});
 	
@@ -43,9 +43,9 @@ void RollLockGhost::onLoad()
 		DrawGhostJoystick(canvas);
 	});
 	
-	LOG("RollLockGhost plugin loaded - version {}", plugin_version);
-	LOG("Use 'rolllock_toggle' to enable/disable the feature");
-	LOG("Use 'rolllock_overlay_toggle' to show/hide the overlay");
+	cvarManager->log("RollLockGhost plugin loaded");
+	cvarManager->log("Use 'rolllock_toggle' to enable/disable the feature");
+	cvarManager->log("Use 'rolllock_overlay_toggle' to show/hide the overlay");
 }
 
 void RollLockGhost::onUnload()
@@ -105,10 +105,10 @@ void RollLockGhost::OnSetVehicleInput(CarWrapper caller, void* params, std::stri
 		Rotator rot = caller.GetRotation();
 		baseRoll = rot.Roll;
 		rollLockActive = true;
-		LOG("Roll-Lock ENGAGED - base roll: {:.3f} rad", baseRoll);
+		cvarManager->log("Roll-Lock ENGAGED");
 	} else if (!buttonPressed && rollLockActive) {
 		rollLockActive = false;
-		LOG("Roll-Lock RELEASED");
+		cvarManager->log("Roll-Lock RELEASED");
 	}
 	
 	if (rollLockActive) {
@@ -128,13 +128,6 @@ void RollLockGhost::OnSetVehicleInput(CarWrapper caller, void* params, std::stri
 		
 		input.Yaw = correctedYaw;
 		input.Pitch = correctedPitch;
-		
-		timeSinceLastLog += 1.0f / 120.0f;
-		if (timeSinceLastLog >= LOG_INTERVAL) {
-			LOG("RollLock: Raw({:.2f}, {:.2f}) -> Corrected({:.2f}, {:.2f}) | deltaRoll={:.3f}",
-				rawYaw, rawPitch, correctedYaw, correctedPitch, deltaRoll);
-			timeSinceLastLog = 0.0f;
-		}
 	} else {
 		correctedYaw = rawYaw;
 		correctedPitch = rawPitch;
@@ -173,7 +166,13 @@ void RollLockGhost::DrawGhostJoystick(CanvasWrapper canvas)
 	};
 	
 	canvas.SetColor(255, 255, 255, 200);
-	canvas.DrawCircle(center, static_cast<int>(radius), 50);
+	for (int i = 0; i < 50; i++) {
+		float angle1 = (i / 50.0f) * 2.0f * 3.14159f;
+		float angle2 = ((i + 1) / 50.0f) * 2.0f * 3.14159f;
+		Vector2F p1 = {center.X + cosf(angle1) * radius, center.Y + sinf(angle1) * radius};
+		Vector2F p2 = {center.X + cosf(angle2) * radius, center.Y + sinf(angle2) * radius};
+		canvas.DrawLine(p1, p2, 1.0f);
+	}
 	
 	canvas.SetColor(128, 128, 128, 200);
 	canvas.DrawLine(Vector2F{center.X - 5, center.Y}, Vector2F{center.X + 5, center.Y}, 1.0f);
@@ -189,7 +188,12 @@ void RollLockGhost::DrawGhostJoystick(CanvasWrapper canvas)
 	
 	canvas.SetColor(0, 255, 0, 255);
 	canvas.DrawLine(center, rawPos, 2.0f);
-	canvas.FillCircle(rawPos, 5, 20);
+	for (int i = 0; i < 20; i++) {
+		float angle = (i / 20.0f) * 2.0f * 3.14159f;
+		Vector2F p1 = {rawPos.X + cosf(angle) * 5, rawPos.Y + sinf(angle) * 5};
+		Vector2F p2 = {rawPos.X + cosf(angle + 0.3f) * 5, rawPos.Y + sinf(angle + 0.3f) * 5};
+		canvas.DrawLine(p1, p2, 1.0f);
+	}
 	
 	float corrX = correctedYaw;
 	float corrY = -correctedPitch;
@@ -202,7 +206,12 @@ void RollLockGhost::DrawGhostJoystick(CanvasWrapper canvas)
 		
 		canvas.SetColor(255, 0, 0, 255);
 		canvas.DrawLine(center, corrPos, 2.0f);
-		canvas.FillCircle(corrPos, 5, 20);
+		for (int i = 0; i < 20; i++) {
+			float angle = (i / 20.0f) * 2.0f * 3.14159f;
+			Vector2F p1 = {corrPos.X + cosf(angle) * 5, corrPos.Y + sinf(angle) * 5};
+			Vector2F p2 = {corrPos.X + cosf(angle + 0.3f) * 5, corrPos.Y + sinf(angle + 0.3f) * 5};
+			canvas.DrawLine(p1, p2, 1.0f);
+		}
 	}
 	
 	canvas.SetPosition(Vector2{static_cast<int>(center.X - radius), static_cast<int>(center.Y - radius - 40)});
@@ -267,7 +276,7 @@ void RollLockGhost::ToggleRollLock(std::vector<std::string> params)
 	bool currentValue = enabledCvar.getBoolValue();
 	enabledCvar.setValue(!currentValue);
 	
-	LOG("Roll-Lock {}", !currentValue ? "ENABLED" : "DISABLED");
+	cvarManager->log(!currentValue ? "Roll-Lock ENABLED" : "Roll-Lock DISABLED");
 }
 
 void RollLockGhost::ToggleOverlay(std::vector<std::string> params)
@@ -280,5 +289,5 @@ void RollLockGhost::ToggleOverlay(std::vector<std::string> params)
 	bool currentValue = showCvar.getBoolValue();
 	showCvar.setValue(!currentValue);
 	
-	LOG("Ghost Joystick Overlay {}", !currentValue ? "SHOWN" : "HIDDEN");
+	cvarManager->log(!currentValue ? "Ghost Joystick Overlay SHOWN" : "Ghost Joystick Overlay HIDDEN");
 }

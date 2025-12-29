@@ -1,0 +1,13 @@
+build/
+dist/
+output/
+*.o
+*.obj
+*.dll
+*.lib
+*.exp
+.DS_Store
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+Makefile

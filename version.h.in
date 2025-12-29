@@ -1,0 +1,12 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+#define VERSION_MAJOR @VERSION_MAJOR@
+#define VERSION_MINOR @VERSION_MINOR@
+#define VERSION_PATCH @VERSION_PATCH@
+#define VERSION_BUILD @VERSION_BUILD@
+
+#define stringify(a) stringify_(a)
+#define stringify_(a) #a
+
+#endif
